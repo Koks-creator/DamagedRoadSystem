@@ -1,5 +1,5 @@
 # Road Damage Detector
-bullshit
+this bullshit not finished yet
 
 ## Setup
   - ```pip install -r requirements.txt```
