@@ -1,0 +1,58 @@
+# YOLOv5 Hyperparameters for Road Damage Detection
+# Optimized for classes: hole, crack, block cracking, patching
+
+# Training parameters
+lr0: 0.01  # początkowa wartość learning rate
+lrf: 0.1  # końcowy mnożnik learning rate (lr0 * lrf)
+momentum: 0.937  # momentum SGD
+weight_decay: 0.0005  # weight decay
+warmup_epochs: 3.0  # liczba epok rozgrzewki
+warmup_momentum: 0.8  # początkowa wartość momentum podczas rozgrzewki
+warmup_bias_lr: 0.1  # początkowa wartość bias lr podczas rozgrzewki
+box: 0.05  # box loss gain
+cls: 0.5  # cls loss gain
+cls_pw: 1.0  # cls BCELoss positive_weight
+obj: 1.0  # obj loss gain (scale with pixels)
+obj_pw: 1.0  # obj BCELoss positive_weight
+iou_t: 0.20  # IoU training threshold
+anchor_t: 4.0  # anchor-multiple threshold
+fl_gamma: 0.0  # focal loss gamma (efficientDet default gamma=1.5)
+hsv_h: 0.015  # image HSV-Hue augmentation (fraction)
+hsv_s: 0.7  # image HSV-Saturation augmentation (fraction)
+hsv_v: 0.4  # image HSV-Value augmentation (fraction)
+degrees: 45.0  # image rotation (+/- deg)
+translate: 0.2  # image translation (+/- fraction)
+scale: 0.2  # image scale (+/- gain)
+shear: 15.0  # image shear (+/- deg)
+perspective: 0.0015  # image perspective (+/- fraction), range 0-0.001
+flipud: 0.5  # image flip up-down (probability)
+fliplr: 0.5  # image flip left-right (probability)
+mosaic: 1.0  # image mosaic (probability)
+mixup: 0.2  # image mixup (probability)
+copy_paste: 0.3  # segment copy-paste (probability)
+
+# Zwiększona augmentacja dla niezbalansowanych klas
+# Bardziej agresywne dla klas z mniejszą ilością przykładów
+scale_low_data: 0.3  # zwiększone skalowanie dla klas z mniejszą ilością danych
+mosaic_low_data: 1.0  # zwiększone prawdopodobieństwo mozaiki
+cutout: 0.3  # implementacja cutout - symuluje częściowe zakrycie obiektu
+blur: 0.1  # rozmycie obrazu (probability) - symulacja różnych warunków pogodowych
+
+# Zaawansowane parametry augmentacji
+auto_augment: randaugment  # zastosuj RandAugment
+mixup_ratio: [0.8, 1.2]  # zakres współczynnika mixup
+erasing: 0.2  # random erasing (probability) - uzupełnienie dla cutout
+
+# Optymalizacje treningu
+image_weights: True  # używaj ważenia obrazów podczas próbkowania
+multi_scale: True  # użyj wieloskalowego treningu
+rect: False  # prostokątny trening
+patience: 500  # EarlyStopping patience (epochs bez poprawy)
+freeze: [0, 1, 2]  # zamroź te warstwy podczas początkowego treningu
+
+# Optymalizacja dla wykrywania małych uszkodzeń
+anchor_scales: [1, 1.25, 1.5, 2]  # mniejsze skale kotwic dla lepszej detekcji małych obiektów
+grid_min: 8  # minimalny rozmiar siatki dla detekcji małych obiektów
+
+# Parametry do balansowania klas
+class_weights: [1.0, 0.93, 1.9, 1.46]  # wagi klas [hole, crack, block cracking, patching]
