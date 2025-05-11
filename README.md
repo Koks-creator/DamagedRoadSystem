@@ -1,7 +1,13 @@
 # Road Damage Detector
-this bullshit not finished yet
+Road damage detector using YOLO and SAHI.
+https://docs.ultralytics.com/
+<br>
+https://docs.ultralytics.com/guides/sahi-tiled-inference/
+
+[![video](https://img.youtube.com/vi/hdEJjqcZfDg/0.jpg)](https://www.youtube.com/watch?v=hdEJjqcZfDg)
 
 ## Setup
+  - install python 3.11+ (version I use)
   - ```pip install -r requirements.txt```
 
 ## Packages
@@ -69,6 +75,9 @@ Detector for yolov5, nothing fancy.
 #### **Parameters:**
  - `img`: `Union[str, np.array]` - Numpy image or path to an image.
 
+#### **Returns:**
+- `Tuple[np.array, pd.DataFrame]` - Image with drawn detections, dataframe with detections.
+
 ### **Basic usage:**
 ```python
 yolo_predictor = YoloDetector(
@@ -83,9 +92,6 @@ for detection in res:
 cv2.imshow("res", image_draw)
 cv2.waitKey(0)
 ```
-
-#### **Returns:**
-- `Tuple[np.array, pd.DataFrame]` - Image with drawn detections, dataframe with detections.
 
 ### <u>***yolo_detector.py***</u>
 Detector for yolov11, for both regular and sahi version.
@@ -109,8 +115,8 @@ Detector for yolov11, for both regular and sahi version.
 #### **Returns:**
   - `List[tuple]` - return list of tuples, each tuple contains pair of detection data and image with drawn detections.
 
- <br>
- <br>
+<br>
+<hr>
 
 `detect_with_sahi` - detection function that processes an image and returns detection results BUT with **SAHI** (Slicing Aided Hyper Inference - https://docs.ultralytics.com/guides/sahi-tiled-inference/), which helps a lot in detecting really small objects.
 
@@ -123,8 +129,8 @@ Detector for yolov11, for both regular and sahi version.
 #### **Returns:**
  - `List[tuple]` - return list of tuples, each tuple contains pair of detection data and image with drawn detections.
 
- <br>
- <br>
+<br>
+<hr>
 
 `yield_data` - Method for yielding detection data from `detect` method.
 #### **Parameters:**
@@ -133,7 +139,7 @@ Detector for yolov11, for both regular and sahi version.
  - `Generator` - processed detection data into: `cls_id, class_name, conf,  (x1, y1, x2, y2)`
 
  <br>
- <br>
+<hr>
 
 `yield_sahi_data` - Method for yielding detection data from `detect_with_sahi` method.
 #### **Parameters:**
@@ -210,5 +216,129 @@ Both image and video methods have some options that allow to customize visualizt
 ![alt text](assets/video_compare1.png)
 ![alt text](assets/video_compare2.png)
 ![alt text](assets/video_compare3.png)
+![alt text](assets/Figure_1.png)
+![alt text](assets/Figure_2.png)
+![alt text](assets/Figure_3.png)
+![alt text](assets/Figure_4.png)
 
-Yolov11
+**Yolov11 seem to perform better than yolov5**, Yolov11 with **SAHI can detect smaller details** but it's not always better solution than regular Yolov11, the other factor is that SAHI is most cases takes more time to process, **while regular yolov5 and 11 are faster**.
+
+## Road Damage Detection
+Main functionality sits in **main.py** file, which uses few other modules:
+ - **config.py** - Managing configuration.
+ - **sort_tracker.py** - Providing SORT algorithm for tracking detection object.
+ - **yolo_detector.py** - YOLO detector.
+ - **custom_decorators.py** - Providing extra functionality, mostly for logging.
+ - **custom_logger** - Providing logger.
+
+### <u>***main.py***</u>
+Main file lol.
+#### **Attributes:**
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model_path` | `str` | value from `Config.MODEL_PATH` | Path to the YOLOv11 model.
+| `classes_path` | `str` | value from `Config.CLASSES_PATH` | Path to the classes path.
+| `device` | `str` | value from `Config.DEVICE` | Device.
+| `sort_max_age` | `int` | value from `Config.SORT_MIN_HITS` | Max age of tracked object - for example if set to 5 object will be lost if not seen for 5 frames.
+| `sort_min_hits` | `int` |  value from `Config.SORT_MIN_HITS`| How many times obejct has to be seen in order to be tracked. 
+| `sort_iou_threshold` | `int` | value from `Config.SORT_IOU_THRESHOLD` |Intersection Over Union (IoU) threshold - it's used to "recognize" if it's the same object, for example if set to 0.3 boxes have to align in 30% in order to tell if it's the same object.
+
+#### **Methods:**
+
+**`process_frame`** - method for processing single frame/image - making detections and tracking.
+
+#### **Parameters:**
+ - `frame`: ` np.array`
+ - `use_sahi`: `bool`
+ - `conf`: `float` - Confidence threshold for regular YOLO models.
+ - `iou`: `float` - IOU for regular YOLO models.
+ - `augment`: `bool` - Augment for regular YOLO models.
+ - `sahi_conf`: `float`
+ - `sahi_slice_height`: `int`
+ - `sahi_slice_width`: `int`
+ - `sahsahi_overlap_height_ratioi_conf`: `float`
+ - `sahi_overlap_height_ratio`: `float`
+ - `detection_history`: `defaultdict[int]` - Detection history, used to avoid counting the same object over and over again.
+ - `track`: `bool` - Tracking objects with SORT algorithm.
+ - `min_det_frames`: `int` - Used to avoid counting objects that appeared for a frame or two, so object has to appear X times in order to be counted, **if you're working with just one image not frame stream you can set it to 0.**
+ - `font_size`: `float`
+ - `font_thick`: `int`
+ - `bbox_thick`: `int`
+
+ #### **Returns:**
+ - `tuple[np.array, np.array, dict, np.array, Generator]` - Returns frame raw with detections, frame with processed detections , summary, tracking data, detection generator.
+
+<br>
+<hr>
+
+**`process_video`** - same thing as `process_frame` but for video and with drawing FPS and count summary.
+
+#### **Parameters:**
+  - `vid_cap`: `Union[int, Path, str]`
+  - **rest is the same as in `process_frame`**
+#### **Returns:**
+ - `None`
+
+ **`draw_summary`** - drawing count summary.
+ #### **Parameters:**
+  - `frame`: `np.array`
+  - `summary`: `dict`
+  - `x`: `int` - Where summary starts in x axis.
+  - `y`: `int` - Where summary starts in y axis.
+  - `font_size`: `float`
+  - `font_thick`: `int`
+  - `color`: `tuple[int, int, int]`
+  - `y_step`: `int` - Steo between each class count.
+#### **Returns:**
+ - `None`
+
+<br>
+<hr>
+
+**`draw_bbox`** - drawing object bbox.
+#### **Parameters:**
+  - `img`: `np.ndarray`
+  - `bbox`: `Tuple[int, int, int, int]`
+  - `class_name`: `str`
+  - `obj_id`: `int`
+  - `conf`: `float`
+  - `font_thick`: `int`
+  - `font_size`: `float`
+  - `colors`: `dict` - Colors for each class.
+  - `bbox_thick`: `int`
+#### **Returns:**
+ - `None`
+
+## Dataset Preparation Tools and Training model
+Train YOLOv5: https://github.com/Koks-creator/HowToTrainCustomYoloV5Model
+<br>
+Train YOLOv11: use **yolov11.ipynb** notebook, rest is almost the same, almost since you just need to upload train_data.zip into google drive, change few parameters (**CLASS_NAMES** for example).
+
+Tools in the `DatasetPrepTools` directory:
+- `setup_dataset_folder.py` - Creates training dataset folder structure.
+- `move_files.py` - Splits data into training/validation/test sets.
+- `dataset_cleaner.py` - Filters and processes raw dataset.
+- `class_counts.py` - Analyzes class distribution.
+
+## Logging and decorators
+
+### Logging
+Logging tools are handled by `custom_logger.py` it logs to both file and CLI.
+
+### Decorators
+Logging decroators because I like logging - `custom_decorators.py`.
+
+**`timeit`**
+#### **Parameters:**
+ - `logger`: `Logger` - you can log execution time.
+ - `print_time`: `bool` - or not, you can just print it.
+ - `return_val`: `bool` - you can also return execution time.
+
+ <hr>
+ <br>
+
+**`log_call`**
+#### **Parameters:**
+ - `logger`: `Logger` - you can log execution time.
+ - `log_params`: `list` - list of parameters of method you want to log, sometimes you don't want to log some stuff, so you can choose only the ones you are interested in or you can set it to `[""]` to not log anything.
+ - `hide_res`: `bool` - show (or not) retuned data.
