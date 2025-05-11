@@ -134,7 +134,7 @@ class DamagedRoadSystem:
                                          "sahi_overlap_width_ratio", "track", "draw_track", "min_det_frames", 
                                          "font_size", "font_thick", "bbox_thick"])
     @timeit(logger=logger) 
-    def main(self, vid_cap: Union[int, Path, str], use_sahi: bool = True, conf: float = .2, 
+    def process_video(self, vid_cap: Union[int, Path, str], use_sahi: bool = True, conf: float = .2, 
              iou: float = .35, augment: bool = True, sahi_conf: float = 0.2, 
              sahi_slice_height: int = 256, sahi_slice_width: int = 256, 
              sahi_overlap_height_ratio: float = 0.2, sahi_overlap_width_ratio: float = 0.2, 
@@ -175,7 +175,7 @@ class DamagedRoadSystem:
                 for key, val in summary_frame.items():
                     summary[key].update(val)
                 
-                self.draw_summary(frame=frame, summary=summary, x=30, y=30)
+                self.draw_summary(frame=frame, summary=summary, x=30, y=50)
             else:
                 frame = detection_frame
             
@@ -197,8 +197,8 @@ if __name__ == "__main__":
         model_path=Config.MODEL_PATH,
         classes_path=Config.CLASSES_PATH
     )
-    mocne.main(
-        vid_cap=rf"{Config.VIDEOS_FOLDER}/vid4.mp4",
+    mocne.process_video(
+        vid_cap=rf"{Config.VIDEOS_FOLDER}/video_2025-04-03_08-10-57.mp4",
         use_sahi=Config.USE_SAHI,
         conf=Config.CONF_THRESH,
         iou=Config.IOU,
