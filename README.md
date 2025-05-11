@@ -278,6 +278,9 @@ Main file lol.
   - **rest is the same as in `process_frame`**
 #### **Returns:**
  - `None`
+   
+<br>
+<hr>
 
  **`draw_summary`** - drawing count summary.
  #### **Parameters:**
